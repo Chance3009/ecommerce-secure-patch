@@ -1,4 +1,12 @@
 <?php
+	
+	// Anti-clickjacking header
+	header('X-Frame-Options: DENY');
+	
+	// Secure session settings
+	ini_set('session.cookie_httponly', 1);
+	ini_set('session.cookie_samesite', 'Strict');
+	session_start();
 
 	// Error Reporting
 

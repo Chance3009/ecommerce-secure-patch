@@ -1,6 +1,5 @@
 <?php
 	ob_start();
-	session_start();
 	$pageTitle = 'Show Items';
 	include 'init.php';
 

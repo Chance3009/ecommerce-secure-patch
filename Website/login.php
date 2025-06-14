@@ -1,6 +1,5 @@
 <?php
 	ob_start();
-	session_start();
 	$pageTitle = 'Login';
 	if (isset($_SESSION['user'])) {
 		header('Location: index.php');

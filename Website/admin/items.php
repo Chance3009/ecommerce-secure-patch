@@ -7,9 +7,6 @@
 	*/
 
 	ob_start(); // Output Buffering Start
-
-	session_start();
-
 	$pageTitle = 'Items';
 
 	if (isset($_SESSION['Username'])) {

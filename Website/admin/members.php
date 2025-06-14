@@ -8,9 +8,6 @@
 	*/
 
 	ob_start(); // Output Buffering Start
-
-	session_start();
-
 	$pageTitle = 'Members';
 
 	if (isset($_SESSION['Username'])) {
