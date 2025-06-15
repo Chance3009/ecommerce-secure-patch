@@ -1,6 +1,11 @@
 <?php
 	ob_start();
 	session_start();
+
+	if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+	}
+
 	$pageTitle = 'Login';
 	if (isset($_SESSION['user'])) {
 		header('Location: index.php');
@@ -11,42 +16,28 @@
 
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
+		if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+   			die('Invalid CSRF token');
+		}
+
 		if (isset($_POST['login'])) {
 
-			$user = $_POST['username'];
+		    $user = $_POST['username'];
 			$pass = $_POST['password'];
-			$hashedPass = sha1($pass);
 
-			// Check If The User Exist In Database
-
-			$stmt = $con->prepare("SELECT 
-										UserID, Username, Password, avatar
-									FROM 
-										users 
-									WHERE 
-										Username = ? 
-									AND 
-										Password = ?");
-
-			$stmt->execute(array($user, $hashedPass));
-
+			$stmt = $con->prepare("SELECT UserID, Username, Password, avatar FROM users WHERE Username = ?");
+			$stmt->execute([$user]);
 			$get = $stmt->fetch();
-
 			$count = $stmt->rowCount();
 
-			// If Count > 0 This Mean The Database Contain Record About This Username
-
-			if ($count > 0) {
-
-				$_SESSION['user'] = $user; // Register Session Name
-
-				$_SESSION['uid'] = $get['UserID']; // Register User ID in Session
-
+			if ($count > 0 && password_verify($pass, $get['Password'])) {
+				$_SESSION['user'] = $user;
+				$_SESSION['uid'] = $get['UserID'];
 				$_SESSION['avatar'] = $get['avatar'];
-
-				header('Location: index.php'); // Redirect To Dashboard Page
-
+				header('Location: index.php');
 				exit();
+			} else {
+				$formErrors[] = 'Invalid username or password';
 			}
 
 		} else {
@@ -93,15 +84,18 @@
 			if (isset($password) && isset($password2)) {
 
 				if (empty($password)) {
-
-					$formErrors[] = 'Sorry Password Cant Be Empty';
-
-				}
-
-				if (sha1($password) !== sha1($password2)) {
-
-					$formErrors[] = 'Sorry Password Is Not Match';
-
+					$formErrors[] = 'Password cannot be empty';
+				} elseif ($password !== $password2) {
+					$formErrors[] = 'Passwords do not match';
+				} elseif (strlen($password) < 8) {
+					$formErrors[] = 'Password must be at least 8 characters long';
+				} elseif (
+					!preg_match('/[A-Z]/', $password) ||    // Uppercase
+					!preg_match('/[a-z]/', $password) ||    // Lowercase
+					!preg_match('/[0-9]/', $password) ||    // Number
+					!preg_match('/[\W]/', $password)        // Special char
+				) {
+					$formErrors[] = 'Password must contain uppercase, lowercase, number, and special character';
 				}
 
 			}
@@ -144,7 +138,7 @@
 					$stmt->execute(array(
 
 						'zuser' => $username,
-						'zpass' => sha1($password),
+						'zpass' => password_hash($password, PASSWORD_BCRYPT),
 						'zmail' => $email,
 						'zname' => $fullname,
 						'zpic'	=> $avatar
@@ -172,6 +166,9 @@
 	</h1>
 	<!-- Start Login Form -->
 	<form class="login" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
+
+		<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
 		<div class="input-container">
 			<input 
 				class="form-control" 
@@ -195,6 +192,9 @@
 	<!-- End Login Form -->
 	<!-- Start Signup Form -->
 	<form class="signup" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST"  enctype="multipart/form-data">
+
+		<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+		
 		<div class="input-container">
 			<input 
 				pattern=".{4,}"
