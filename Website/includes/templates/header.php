@@ -1,8 +1,3 @@
-<?php
-// Prevent clickjacking
-header('X-Frame-Options: DENY');
-?>
-
 <!DOCTYPE html>
 <html>
 	<head>
