@@ -8,34 +8,64 @@
 	ini_set('session.cookie_samesite', 'Strict');
 	session_start();
 
-	// Error Reporting
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
 
-	ini_set('display_errors', 'On');
-	error_reporting(E_ALL);
+// Initialize session variables if they don't exist
+if (!isset($_SESSION['last_regeneration'])) {
+	$_SESSION['last_regeneration'] = time();
+}
+if (!isset($_SESSION['last_activity'])) {
+	$_SESSION['last_activity'] = time();
+}
 
-	include 'admin/connect.php';
+// Regenerate session ID every 30 minutes
+$regeneration_time = 30 * 60; 
+if (time() - $_SESSION['last_regeneration'] > $regeneration_time) {
+	session_regenerate_id(true);
+	$_SESSION['last_regeneration'] = time();
+}
 
-	$sessionUser = '';
-	$sessionAvatar = '';
-	
-	if (isset($_SESSION['user'])) {
-		$sessionUser = $_SESSION['user'];
-		$sessionAvatar = $_SESSION['avatar'];
-	}
+// Session timeout after 30 minutes of inactivity
+$timeout = 30 * 60;
+if (time() - $_SESSION['last_activity'] > $timeout) {
+	session_unset();
+	session_destroy();
+	session_start();
+	session_regenerate_id(true);
+	$_SESSION['last_activity'] = time();
+	$_SESSION['last_regeneration'] = time();
+} else {
+	$_SESSION['last_activity'] = time();
+}
 
-	// Routes
+// Error Reporting
 
-	$tpl 	= 'includes/templates/'; // Template Directory
-	$lang 	= 'includes/languages/'; // Language Directory
-	$func	= 'includes/functions/'; // Functions Directory
-	$css 	= 'layout/css/'; // Css Directory
-	$js 	= 'layout/js/'; // Js Directory
+ini_set('display_errors', 'On');
+error_reporting(E_ALL);
 
-	// Include The Important Files
+include 'admin/connect.php';
 
-	include $func . 'functions.php';
-	include $lang . 'english.php';
-	include $tpl . 'header.php';
-	
+$sessionUser = '';
+$sessionAvatar = '';
 
-	
+if (isset($_SESSION['user'])) {
+	$sessionUser = $_SESSION['user'];
+	$sessionAvatar = $_SESSION['avatar'];
+}
+
+// Routes
+
+$tpl 	= 'includes/templates/'; // Template Directory
+$lang 	= 'includes/languages/'; // Language Directory
+$func	= 'includes/functions/'; // Functions Directory
+$css 	= 'layout/css/'; // Css Directory
+$js 	= 'layout/js/'; // Js Directory
+
+// Include The Important Files
+
+include $func . 'functions.php';
+include $lang . 'english.php';
+include $tpl . 'header.php';

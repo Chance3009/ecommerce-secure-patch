@@ -1,4 +1,5 @@
 <?php
+	
 	ob_start();
 	$pageTitle = 'Show Items';
 	include 'init.php';
