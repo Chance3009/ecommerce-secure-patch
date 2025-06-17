@@ -52,33 +52,37 @@ INSERT INTO `categories` (`ID`, `Name`, `Description`, `parent`, `Ordering`, `Vi
 
 -- --------------------------------------------------------
 
+-- --------------------------------------------------------
+
 --
--- Table structure for table `comments`
+-- Table structure for table `users`
 --
 
-CREATE TABLE IF NOT EXISTS `comments` (
-  `c_id` int(11) NOT NULL AUTO_INCREMENT,
-  `comment` text NOT NULL,
-  `status` tinyint(4) NOT NULL,
-  `comment_date` date NOT NULL,
-  `item_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  PRIMARY KEY (`c_id`),
-  KEY `items_comment` (`item_id`),
-  KEY `comment_user` (`user_id`),
-  CONSTRAINT `comment_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`UserID`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `items_comment` FOREIGN KEY (`item_id`) REFERENCES `items` (`Item_ID`) ON DELETE CASCADE ON UPDATE CASCADE
+CREATE TABLE IF NOT EXISTS `users` (
+  `UserID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'To Identify User',
+  `Username` varchar(255) NOT NULL COMMENT 'Username To Login',
+  `Password` varchar(255) NOT NULL COMMENT 'Password To Login',
+  `Email` varchar(255) NOT NULL,
+  `FullName` varchar(255) NOT NULL,
+  `GroupID` int(11) NOT NULL DEFAULT 0 COMMENT 'Identify User Group',
+  `TrustStatus` int(11) NOT NULL DEFAULT 0 COMMENT 'Seller Rank',
+  `RegStatus` int(11) NOT NULL DEFAULT 0 COMMENT 'User Approval',
+  `Date` date NOT NULL,
+  `avatar` varchar(255) NOT NULL,
+  PRIMARY KEY (`UserID`),
+  UNIQUE KEY `Username` (`Username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `comments`
+-- Dumping data for table `users`
 --
 
-INSERT INTO `comments` (`c_id`, `comment`, `status`, `comment_date`, `item_id`, `user_id`) VALUES
-(1, 'I love this keyboard', 1, '2020-08-28', 2, 2),
-(9, 'This is a good book, thank you', 1, '2020-08-28', 15, 2);
+INSERT INTO `users` (`UserID`, `Username`, `Password`, `Email`, `FullName`, `GroupID`, `TrustStatus`, `RegStatus`, `Date`, `avatar`) VALUES
+(1, 'Admin', '7af2d10b73ab7cd8f603937f7697cb5fe432c7ff', 'Admin@gmail.com', 'Admin Admin', 1, 1, 1, '2020-08-27', 'default.png'),
+(2, 'LMask', 'e9d155e1e377fed9a68863896a49308449f5b5f9', 'aymandebzi723@gmail.com', 'Aymane Debzi', 0, 0, 1, '2020-08-27', '7809775163_unnamed.jpg');
 
 -- --------------------------------------------------------
+
 
 --
 -- Table structure for table `items`
@@ -117,36 +121,34 @@ INSERT INTO `items` (`Item_ID`, `Name`, `Description`, `Price`, `Add_Date`, `Cou
 (5, 'Houssam Mrabet', 'ssssssssssssssssssss', '15', '2020-08-28', 'Maroc', '4', 0, 1, 1, 2, '1515871950_l20m01.jpg', '0613357700'),
 (15, 'Midnight Sun', 'This is not a physical book, it\'s an e-version', '5', '2020-08-28', 'France', '2', 0, 1, 5, 2, '8719133711_midnight_sun.jpg', '0613774702');
 
--- --------------------------------------------------------
-
 --
--- Table structure for table `users`
+-- Table structure for table `comments`
 --
 
-CREATE TABLE IF NOT EXISTS `users` (
-  `UserID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'To Identify User',
-  `Username` varchar(255) NOT NULL COMMENT 'Username To Login',
-  `Password` varchar(255) NOT NULL COMMENT 'Password To Login',
-  `Email` varchar(255) NOT NULL,
-  `FullName` varchar(255) NOT NULL,
-  `GroupID` int(11) NOT NULL DEFAULT 0 COMMENT 'Identify User Group',
-  `TrustStatus` int(11) NOT NULL DEFAULT 0 COMMENT 'Seller Rank',
-  `RegStatus` int(11) NOT NULL DEFAULT 0 COMMENT 'User Approval',
-  `Date` date NOT NULL,
-  `avatar` varchar(255) NOT NULL,
-  PRIMARY KEY (`UserID`),
-  UNIQUE KEY `Username` (`Username`)
+CREATE TABLE IF NOT EXISTS `comments` (
+  `c_id` int(11) NOT NULL AUTO_INCREMENT,
+  `comment` text NOT NULL,
+  `status` tinyint(4) NOT NULL,
+  `comment_date` date NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`c_id`),
+  KEY `items_comment` (`item_id`),
+  KEY `comment_user` (`user_id`),
+  CONSTRAINT `comment_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`UserID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `items_comment` FOREIGN KEY (`item_id`) REFERENCES `items` (`Item_ID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `users`
+-- Dumping data for table `comments`
 --
 
-INSERT INTO `users` (`UserID`, `Username`, `Password`, `Email`, `FullName`, `GroupID`, `TrustStatus`, `RegStatus`, `Date`, `avatar`) VALUES
-(1, 'Admin', '7af2d10b73ab7cd8f603937f7697cb5fe432c7ff', 'Admin@gmail.com', 'Admin Admin', 1, 1, 1, '2020-08-27', 'default.png'),
-(2, 'LMask', 'e9d155e1e377fed9a68863896a49308449f5b5f9', 'aymandebzi723@gmail.com', 'Aymane Debzi', 0, 0, 1, '2020-08-27', '7809775163_unnamed.jpg');
+INSERT INTO `comments` (`c_id`, `comment`, `status`, `comment_date`, `item_id`, `user_id`) VALUES
+(1, 'I love this keyboard', 1, '2020-08-28', 2, 2),
+(9, 'This is a good book, thank you', 1, '2020-08-28', 15, 2);
 
 -- --------------------------------------------------------
+
 
 --
 -- Indexes for dumped tables
