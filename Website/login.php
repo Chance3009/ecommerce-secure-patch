@@ -122,24 +122,9 @@
 
 			if (empty($formErrors)) {
 
-				$allowedExtensions = ['jpeg', 'jpg', 'png', 'gif'];
-				$allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+				$avatar = rand(0, 10000000000) . '_' . $avatarName;
 
-				$avatarExtension = strtolower(pathinfo($avatarName, PATHINFO_EXTENSION));
-				$avatarMimeType = mime_content_type($avatarTmp);
-
-			if (in_array($avatarExtension, $allowedExtensions) && in_array($avatarMimeType, $allowedMimeTypes)) {
-
-    			$avatar = rand(0, 10000000000) . '_' . $avatarName;
-
-    			// Use forward slashes for compatibility
-    			$uploadPath = "admin/uploads/avatars/" . $avatar;
-
-    			move_uploaded_file($avatarTmp, $uploadPath);
-
-			} else {
-    			$formErrors[] = 'Invalid file type. Only images are allowed.';
-			}
+				move_uploaded_file($avatarTmp, "admin/uploads/avatars/" . $avatarName);
 
 				// Check If User Exist in Database
 
