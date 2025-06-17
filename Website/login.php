@@ -1,126 +1,119 @@
 <?php
-	ob_start();
-	session_start();
-	$pageTitle = 'Login';
-	if (isset($_SESSION['user'])) {
-		header('Location: index.php');
-	}
-	include 'init.php';
+ob_start();
+session_start();
 
-	// Check If User Coming From HTTP Post Request
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
-	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+$pageTitle = 'Login';
+if (isset($_SESSION['user'])) {
+  header('Location: index.php');
+}
+include 'init.php';
+
+// Check If User Coming From HTTP Post Request
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+		if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+   			die('Invalid CSRF token');
+		}
 
 		if (isset($_POST['login'])) {
 
-			$user = $_POST['username'];
+		    $user = $_POST['username'];
 			$pass = $_POST['password'];
-			$hashedPass = sha1($pass);
 
-			// Check If The User Exist In Database
-
-			$stmt = $con->prepare("SELECT 
-										UserID, Username, Password, avatar
-									FROM 
-										users 
-									WHERE 
-										Username = ? 
-									AND 
-										Password = ?");
-
-			$stmt->execute(array($user, $hashedPass));
-
+			$stmt = $con->prepare("SELECT UserID, Username, Password, avatar FROM users WHERE Username = ?");
+			$stmt->execute([$user]);
 			$get = $stmt->fetch();
-
 			$count = $stmt->rowCount();
 
-			// If Count > 0 This Mean The Database Contain Record About This Username
-
-			if ($count > 0) {
-
-				$_SESSION['user'] = $user; // Register Session Name
-
-				$_SESSION['uid'] = $get['UserID']; // Register User ID in Session
-
+			if ($count > 0 && password_verify($pass, $get['Password'])) {
+				$_SESSION['user'] = $user;
+				$_SESSION['uid'] = $get['UserID'];
 				$_SESSION['avatar'] = $get['avatar'];
-
-				header('Location: index.php'); // Redirect To Dashboard Page
-
+				header('Location: index.php');
 				exit();
+			} else {
+				$formErrors[] = 'Invalid username or password';
 			}
 
-		} else {
-			
+		$formErrors = array();
 
-			$formErrors = array();
+		$username 	= $_POST['username'];
+		$password 	= $_POST['password'];
+		$password2 	= $_POST['password2'];
+		$email 		= $_POST['email'];
+		$fullname	= $_POST['fullname'];
 
-			$username 	= $_POST['username'];
-			$password 	= $_POST['password'];
-			$password2 	= $_POST['password2'];
-			$email 		= $_POST['email'];
-			$fullname	= $_POST['fullname'];
+		// Upload Variables
 
-			// Upload Variables
+		$avatarName = $_FILES['pictures']['name'];
+		$avatarSize = $_FILES['pictures']['size'];
+		$avatarTmp	= $_FILES['pictures']['tmp_name'];
+		$avatarType = $_FILES['pictures']['type'];
 
-			$avatarName = $_FILES['pictures']['name'];
-			$avatarSize = $_FILES['pictures']['size'];
-			$avatarTmp	= $_FILES['pictures']['tmp_name'];
-			$avatarType = $_FILES['pictures']['type'];
+		// List Of Allowed File Typed To Upload
 
-			// List Of Allowed File Typed To Upload
+		$avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
 
-			$avatarAllowedExtension = array("jpeg", "jpg", "png", "gif");
+		// Get Avatar Extension
 
-			// Get Avatar Extension
-				
-			$ref = explode('.', $avatarName);
-			$avatarExtension = strtolower(end($ref));
-			
-			// Get Variables From The Form
+		$ref = explode('.', $avatarName);
+		$avatarExtension = strtolower(end($ref));
 
-			if (isset($username)) {
+		// Get Variables From The Form
 
-				$filterdUser = filter_var($username, FILTER_SANITIZE_STRING);
+		if (isset($username)) {
 
-				if (strlen($filterdUser) < 4) {
+			$filterdUser = filter_var($username, FILTER_SANITIZE_STRING);
 
-					$formErrors[] = 'Username Must Be Larger Than 4 Characters';
+			if (strlen($filterdUser) < 4) {
 
-				}
-
+				$formErrors[] = 'Username Must Be Larger Than 4 Characters';
 			}
+		}
 
 			if (isset($password) && isset($password2)) {
 
 				if (empty($password)) {
-
-					$formErrors[] = 'Sorry Password Cant Be Empty';
-
+					$formErrors[] = 'Password cannot be empty';
+				} elseif ($password !== $password2) {
+					$formErrors[] = 'Passwords do not match';
+				} elseif (strlen($password) < 8) {
+					$formErrors[] = 'Password must be at least 8 characters long';
+				} elseif (
+					!preg_match('/[A-Z]/', $password) ||    // Uppercase
+					!preg_match('/[a-z]/', $password) ||    // Lowercase
+					!preg_match('/[0-9]/', $password) ||    // Number
+					!preg_match('/[\W]/', $password)        // Special char
+				) {
+					$formErrors[] = 'Password must contain uppercase, lowercase, number, and special character';
 				}
 
-				if (sha1($password) !== sha1($password2)) {
 
-					$formErrors[] = 'Sorry Password Is Not Match';
-
-				}
-
+				$formErrors[] = 'Sorry Password Cant Be Empty';
 			}
 
-			if (isset($email)) {
+			if (sha1($password) !== sha1($password2)) {
 
-				$filterdEmail = filter_var($email, FILTER_SANITIZE_EMAIL);
-
-				if (filter_var($filterdEmail, FILTER_VALIDATE_EMAIL) != true) {
-
-					$formErrors[] = 'This Email Is Not Valid';
-
-				}
-
+				$formErrors[] = 'Sorry Password Is Not Match';
 			}
+		}
 
-			// Check If There's No Error Proceed The User Add
+		if (isset($email)) {
 
-			if (empty($formErrors)) {
+			$filterdEmail = filter_var($email, FILTER_SANITIZE_EMAIL);
+
+			if (filter_var($filterdEmail, FILTER_VALIDATE_EMAIL) != true) {
+
+				$formErrors[] = 'This Email Is Not Valid';
+			}
+		}
+
+		// Check If There's No Error Proceed The User Add
 
 				$allowedExtensions = ['jpeg', 'jpg', 'png', 'gif'];
 				$allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
@@ -141,68 +134,76 @@
     			$formErrors[] = 'Invalid file type. Only images are allowed.';
 			}
 
-				// Check If User Exist in Database
+			move_uploaded_file($avatarTmp, "admin/uploads/avatars/" . $avatarName);
 
-				$check = checkItem("Username", "users", $username);
+			// Check If User Exist in Database
 
-				if ($check == 1) {
+			$check = checkItem("Username", "users", $username);
 
-					$formErrors[] = 'Sorry This User Is Exists';
+			if ($check == 1) {
 
-				} else {
+				$formErrors[] = 'Sorry This User Is Exists';
+			} else {
 
-					// Insert Userinfo In Database
+				// Insert Userinfo In Database
 
-					$stmt = $con->prepare("INSERT INTO 
+				$stmt = $con->prepare("INSERT INTO 
 											users(Username, Password, Email, FullName, RegStatus, Date, avatar)
 										VALUES(:zuser, :zpass, :zmail, :zname, 0, now(), :zpic)");
 					$stmt->execute(array(
 
 						'zuser' => $username,
-						'zpass' => sha1($password),
+						'zpass' => password_hash($password, PASSWORD_BCRYPT),
 						'zmail' => $email,
 						'zname' => $fullname,
 						'zpic'	=> $avatar
 
 					));
 
-					// Echo Success Message
+					'zuser' => $username,
+					'zpass' => sha1($password),
+					'zmail' => $email,
+					'zname' => $fullname,
+					'zpic'	=> $avatar
 
-					$succesMsg = 'Congrats You Are Now Registerd User';
+				));
 
-				}
+				// Echo Success Message
 
+				$succesMsg = 'Congrats You Are Now Registerd User';
 			}
-
 		}
-
 	}
+}
 
 ?>
 
 <div class="container login-page">
 	<h1 class="text-center">
-		<span class="selected" data-class="login">Login</span> | 
+		<span class="selected" data-class="login">Login</span> |
 		<span data-class="signup">Signup</span>
 	</h1>
 	<!-- Start Login Form -->
 	<form class="login" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST">
+
+		<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
 		<div class="input-container">
-			<input 
-				class="form-control" 
-				type="text" 
-				name="username" 
+			<input
+				class="form-control"
+				type="text"
+				name="username"
 				autocomplete="off"
-				placeholder="Username" 
+				placeholder="Username"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
-				class="form-control" 
-				type="password" 
-				name="password" 
+			<input
+				class="form-control"
+				type="password"
+				name="password"
 				autocomplete="new-password"
-				placeholder="Password" 
+				placeholder="Password"
 				required />
 		</div>
 		<input class="btn btn-primary btn-block" name="login" type="submit" value="Login" />
@@ -210,87 +211,87 @@
 	<!-- End Login Form -->
 	<!-- Start Signup Form -->
 	<form class="signup" action="<?php echo $_SERVER['PHP_SELF'] ?>" method="POST"  enctype="multipart/form-data">
+
+		<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+		
 		<div class="input-container">
-			<input 
+			<input
 				pattern=".{4,}"
 				title="Username Must Be Between 4 Chars"
-				class="form-control" 
-				type="text" 
-				name="username" 
+				class="form-control"
+				type="text"
+				name="username"
 				autocomplete="off"
-				placeholder="Username" 
+				placeholder="Username"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
+			<input
 				minlength="4"
-				class="form-control" 
-				type="password" 
-				name="password" 
+				class="form-control"
+				type="password"
+				name="password"
 				autocomplete="new-password"
-				placeholder="Password" 
+				placeholder="Password"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
+			<input
 				minlength="4"
-				class="form-control" 
-				type="password" 
-				name="password2" 
+				class="form-control"
+				type="password"
+				name="password2"
 				autocomplete="new-password"
-				placeholder="Confirm Password" 
+				placeholder="Confirm Password"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
-				class="form-control" 
-				type="email" 
-				name="email" 
-				placeholder="Email" 
+			<input
+				class="form-control"
+				type="email"
+				name="email"
+				placeholder="Email"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
-				class="form-control" 
-				type="text" 
-				name="fullname" 
-				placeholder="Full name" 
+			<input
+				class="form-control"
+				type="text"
+				name="fullname"
+				placeholder="Full name"
 				required />
 		</div>
 		<div class="input-container">
-			<input 
-				class="form-control" 
-				type="file" 
-				name="pictures" 
+			<input
+				class="form-control"
+				type="file"
+				name="pictures"
 				required />
 		</div>
 		<input class="btn btn-success btn-block" name="signup" type="submit" value="Signup" />
 	</form>
 	<!-- End Signup Form -->
 	<div class="the-errors text-center">
-		<?php 
+		<?php
 
-			if (!empty($formErrors)) {
+		if (!empty($formErrors)) {
 
-				foreach ($formErrors as $error) {
+			foreach ($formErrors as $error) {
 
-					echo '<div class="msg error">' . $error . '</div>';
-
-				}
-
+				echo '<div class="msg error">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</div>';
 			}
+		}
 
-			if (isset($succesMsg)) {
+		if (isset($succesMsg)) {
 
-				echo '<div class="msg success">' . $succesMsg . '</div>';
-
-			}
+			echo '<div class="msg success">' . htmlspecialchars($succesMsg, ENT_QUOTES, 'UTF-8') . '</div>';
+		}
 
 		?>
 	</div>
 </div>
 
-<?php 
-	include $tpl . 'footer.php';
-	ob_end_flush();
+<?php
+include $tpl . 'footer.php';
+ob_end_flush();
 ?>
