@@ -1,6 +1,5 @@
 <?php
 
-session_start();
 include 'init.php';
 
 echo "<h1 class='text-center'>Update Member</h1>";
