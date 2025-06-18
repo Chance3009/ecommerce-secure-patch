@@ -3,9 +3,11 @@
 // Anti-clickjacking header
 header('X-Frame-Options: DENY');
 
-// Secure session settings
+// Secure session settings - must be set before session_start()
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_samesite', 'Strict');
+
+// Start session
 session_start();
 
 // Initialize session variables if they don't exist

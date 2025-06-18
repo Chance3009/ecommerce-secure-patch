@@ -1,16 +1,16 @@
 <?php
 ob_start();
-session_start();
+
+$pageTitle = 'Login';
+include 'init.php';
 
 if (empty($_SESSION['csrf_token'])) {
 	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$pageTitle = 'Login';
 if (isset($_SESSION['user'])) {
 	header('Location: index.php');
 }
-include 'init.php';
 
 // Check If User Coming From HTTP Post Request
 
