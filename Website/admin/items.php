@@ -348,7 +348,7 @@ if (isset($_SESSION['Username'])) {
 
 				$avatar = rand(0, 10000000000) . '_' . $avatarName;
 
-				move_uploaded_file($avatarTmp, "uploads\items\\" . $avatar);
+				move_uploaded_file($avatarTmp, "uploads/items/" . $avatar);
 
 				// Insert Userinfo In Database
 

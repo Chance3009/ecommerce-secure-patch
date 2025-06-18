@@ -1,17 +1,12 @@
 <?php
-	
-	// Anti-clickjacking header
-	header('X-Frame-Options: DENY');
-	
-	// Secure session settings
-	ini_set('session.cookie_httponly', 1);
-	ini_set('session.cookie_samesite', 'Strict');
-	session_start();
 
-// Start session
-if (session_status() === PHP_SESSION_NONE) {
-	session_start();
-}
+// Anti-clickjacking header
+header('X-Frame-Options: DENY');
+
+// Secure session settings
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_samesite', 'Strict');
+session_start();
 
 // Initialize session variables if they don't exist
 if (!isset($_SESSION['last_regeneration'])) {
@@ -22,7 +17,7 @@ if (!isset($_SESSION['last_activity'])) {
 }
 
 // Regenerate session ID every 30 minutes
-$regeneration_time = 30 * 60; 
+$regeneration_time = 30 * 60;
 if (time() - $_SESSION['last_regeneration'] > $regeneration_time) {
 	session_regenerate_id(true);
 	$_SESSION['last_regeneration'] = time();
